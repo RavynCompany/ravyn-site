@@ -62,7 +62,7 @@
             ${p.marca ? `<span class="card-marca">${p.marca}</span>` : ""}
             <h3 class="card-nome">${p.nome}</h3>
             <span class="card-preco">${brl(p.preco)}</span>
-            ${LOJA.parcelas > 1 ? `<span class="card-parc">ou ${LOJA.parcelas}x de ${brl(p.preco / LOJA.parcelas)}</span>` : ""}
+            ${maxParcelas() > 1 ? `<span class="card-parc">Pix, débito ou até ${maxParcelas()}x no cartão</span>` : ""}
             <div class="tamanhos" role="radiogroup" aria-label="Tamanho">
               ${p.tamanhos
                 .map((t) => `<button class="tam ${tamanhoEscolhido[p.id] === t ? "ativo" : ""}" data-id="${p.id}" data-tam="${t}" role="radio" aria-checked="${tamanhoEscolhido[p.id] === t}">${t}</button>`)
@@ -85,9 +85,11 @@
     if (!sacola.length) {
       $("#itens").innerHTML = '<p class="vazio"><strong>Tá vazia!</strong>Bora escolher umas peças.</p>';
       $("#sacolaRodape").hidden = true;
+      $("#checkout").hidden = true;
       return;
     }
     $("#sacolaRodape").hidden = false;
+    $("#checkout").hidden = false;
     $("#itens").innerHTML = sacola
       .map((i, idx) => {
         const p = PRODUTOS.find((x) => x.id === i.id);
@@ -111,14 +113,111 @@
         </div>`;
       })
       .join("");
-    $("#total").textContent = brl(total());
+    atualizarTotais();
   }
 
-  const total = () =>
+  const subtotal = () =>
     sacola.reduce((s, i) => {
       const p = PRODUTOS.find((x) => x.id === i.id);
       return s + (p ? p.preco * i.qtd : 0);
     }, 0);
+
+  // ---------- Pagamento ----------
+  const PAG = LOJA.pagamento || { pix: 0, debito: 0, credito: { 1: 0 } };
+  const NOMES = { pix: "Pix", debito: "Cartão de débito", credito: "Cartão de crédito" };
+  const maxParcelas = () => Math.max(1, ...Object.keys(PAG.credito || {}).map(Number));
+  let forma = "";
+
+  function taxaAtual() {
+    if (forma === "credito") return Number(PAG.credito[$("#parcelas").value]) || 0;
+    if (forma) return Number(PAG[forma]) || 0;
+    return 0;
+  }
+  // Valor cobrado para que, descontada a taxa da maquininha, sobre o subtotal cheio.
+  const comTaxa = (valor, taxa) => (taxa > 0 ? Math.ceil((valor / (1 - taxa / 100)) * 100) / 100 : valor);
+
+  function renderPagamentos() {
+    const opcoes = ["pix", "debito", "credito"].filter((f) => f === "credito" ? PAG.credito && Object.keys(PAG.credito).length : PAG[f] !== undefined);
+    $("#pagamentos").innerHTML = opcoes
+      .map((f) => {
+        const det = f === "pix" ? (PAG.pix ? `+${PAG.pix}%` : "Sem taxa")
+          : f === "debito" ? (PAG.debito ? `+${String(PAG.debito).replace(".", ",")}% maquininha` : "Sem taxa")
+          : `Até ${maxParcelas()}x`;
+        return `<label class="pag ${forma === f ? "ativo" : ""}">
+          <input type="radio" name="pagamento" value="${f}" ${forma === f ? "checked" : ""} />
+          <span class="pag-nome">${f === "pix" ? "Pix" : f === "debito" ? "Débito" : "Crédito"}</span>
+          <span class="pag-det">${det}</span>
+        </label>`;
+      })
+      .join("");
+  }
+
+  function renderParcelas() {
+    const sub = subtotal();
+    const sel = $("#parcelas");
+    const atual = sel.value || "1";
+    sel.innerHTML = Object.keys(PAG.credito || {})
+      .map(Number).sort((a, b) => a - b)
+      .map((n) => {
+        const t = comTaxa(sub, Number(PAG.credito[n]) || 0);
+        return `<option value="${n}" ${String(n) === atual ? "selected" : ""}>${n}x de ${brl(t / n)} (total ${brl(t)})</option>`;
+      })
+      .join("");
+  }
+
+  function atualizarTotais() {
+    const sub = subtotal();
+    renderParcelas();
+    $("#campoParcelas").hidden = forma !== "credito";
+    const taxa = taxaAtual();
+    const tot = comTaxa(sub, taxa);
+    $("#subtotal").textContent = brl(sub);
+    $("#linhaTaxa").hidden = !(taxa > 0);
+    $("#rotuloTaxa").textContent = `Taxa da maquininha (${String(taxa).replace(".", ",")}%)`;
+    $("#valorTaxa").textContent = brl(tot - sub);
+    $("#total").textContent = brl(tot);
+    const n = Number($("#parcelas").value) || 1;
+    $("#formaResumo").textContent = !forma ? "" : forma === "credito" ? `· crédito ${n}x de ${brl(tot / n)}` : `· ${NOMES[forma].toLowerCase()}`;
+    $("#notaTaxa").textContent = forma && forma !== "pix" && taxa > 0 ? "No cartão é acrescentada a taxa da maquininha. No Pix você paga o valor das peças, sem taxa." : "";
+  }
+
+  // ---------- CEP (preenchimento automático) ----------
+  async function buscarCep() {
+    const cep = $("#cep").value.replace(/\D/g, "");
+    const status = $("#cepStatus");
+    if (cep.length !== 8) { status.textContent = ""; return; }
+    status.textContent = "Buscando…";
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await r.json();
+      if (d.erro) throw new Error("CEP não encontrado");
+      $("#rua").value = d.logradouro || $("#rua").value;
+      $("#bairro").value = d.bairro || $("#bairro").value;
+      $("#cidade").value = d.localidade || $("#cidade").value;
+      $("#uf").value = d.uf || $("#uf").value;
+      status.textContent = "✓ Endereço encontrado";
+      ["rua", "bairro", "cidade", "uf"].forEach((id) => $("#" + id).classList.remove("erro"));
+      salvarCliente();
+      $(d.logradouro ? "#numero" : "#rua").focus();
+    } catch {
+      status.textContent = "Não achamos esse CEP. Preencha manualmente.";
+    }
+  }
+
+  // ---------- Dados do cliente (lembrados neste navegador) ----------
+  const CAMPOS = ["nomeCliente", "cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"];
+  function salvarCliente() {
+    const d = {};
+    CAMPOS.forEach((id) => (d[id] = $("#" + id).value));
+    d.forma = forma;
+    try { localStorage.setItem("ravyn-cliente", JSON.stringify(d)); } catch {}
+  }
+  function carregarCliente() {
+    let d = {};
+    try { d = JSON.parse(localStorage.getItem("ravyn-cliente")) || {}; } catch {}
+    CAMPOS.forEach((id) => { if (d[id]) $("#" + id).value = d[id]; });
+    if (d.forma) forma = d.forma;
+  }
 
   function adicionar(id) {
     const p = PRODUTOS.find((x) => x.id === id);
@@ -158,31 +257,61 @@
 
   // ---------- WhatsApp ----------
   function finalizar() {
-    const nomeEl = $("#nomeCliente");
-    const nome = nomeEl.value.trim();
-    if (!nome) {
-      nomeEl.classList.add("erro");
-      nomeEl.focus();
-      return avisar("Informe seu nome para finalizar");
+    const v = (id) => $("#" + id).value.trim();
+    const obrigatorios = ["nomeCliente", "cep", "rua", "numero", "bairro", "cidade", "uf"];
+    let primeiroErro = null;
+    obrigatorios.forEach((id) => {
+      const el = $("#" + id);
+      const ok = id === "cep" ? v(id).replace(/\D/g, "").length === 8 : v(id) !== "";
+      el.classList.toggle("erro", !ok);
+      if (!ok && !primeiroErro) primeiroErro = el;
+    });
+    if (primeiroErro) {
+      primeiroErro.focus();
+      primeiroErro.scrollIntoView({ block: "center", behavior: "smooth" });
+      return avisar(primeiroErro.id === "nomeCliente" ? "Informe seu nome" : "Complete o endereço de entrega");
     }
-    nomeEl.classList.remove("erro");
+    if (!forma) {
+      $("#pagamentos").classList.add("erro");
+      $("#pagamentos").scrollIntoView({ block: "center", behavior: "smooth" });
+      return avisar("Escolha a forma de pagamento");
+    }
 
+    const sub = subtotal();
+    const taxa = taxaAtual();
+    const tot = comTaxa(sub, taxa);
+    const n = Number($("#parcelas").value) || 1;
     const linhas = sacola.map((i) => {
       const p = PRODUTOS.find((x) => x.id === i.id);
       return `• ${i.qtd}x ${p.nome} — Tam. ${i.tam} — ${brl(p.preco * i.qtd)}`;
     });
-    const obs = $("#obs").value.trim();
+    const pagamento = forma === "credito" ? `Cartão de crédito em ${n}x de ${brl(tot / n)}` : NOMES[forma];
+    const cep = v("cep").replace(/\D/g, "").replace(/(\d{5})(\d{3})/, "$1-$2");
+    const obs = v("obs");
+
     const msg = [
       `Olá, ${LOJA.nome}! Gostaria de fazer um pedido:`,
       "",
+      "*🛒 Itens*",
       ...linhas,
       "",
-      `*Total: ${brl(total())}*`,
+      `Subtotal: ${brl(sub)}`,
+      taxa > 0 ? `Taxa da maquininha (${String(taxa).replace(".", ",")}%): ${brl(tot - sub)}` : null,
+      `*Total: ${brl(tot)}*`,
       "",
-      `Nome: ${nome}`,
-      obs ? `Observação: ${obs}` : "",
-    ].filter((l, i, arr) => !(l === "" && arr[i - 1] === "")).join("\n").trim();
+      "*💳 Pagamento*",
+      pagamento,
+      "",
+      "*📦 Entrega*",
+      v("nomeCliente"),
+      `${v("rua")}, ${v("numero")}${v("complemento") ? ` — ${v("complemento")}` : ""}`,
+      `${v("bairro")} — ${v("cidade")}/${v("uf").toUpperCase()}`,
+      `CEP ${cep}`,
+      obs ? "" : null,
+      obs ? `*📝 Observação:* ${obs}` : null,
+    ].filter((l) => l !== null).join("\n");
 
+    salvarCliente();
     window.open(`https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
@@ -226,6 +355,26 @@
   $("#fundo").addEventListener("click", fechar);
   document.addEventListener("keydown", (e) => e.key === "Escape" && fechar());
   $("#finalizar").addEventListener("click", finalizar);
+  $("#checkout").addEventListener("submit", (e) => { e.preventDefault(); finalizar(); });
+  $("#pagamentos").addEventListener("change", (e) => {
+    if (e.target.name !== "pagamento") return;
+    forma = e.target.value;
+    $("#pagamentos").classList.remove("erro");
+    renderPagamentos();
+    atualizarTotais();
+    salvarCliente();
+  });
+  $("#parcelas").addEventListener("change", atualizarTotais);
+  $("#cep").addEventListener("input", (e) => {
+    let d = e.target.value.replace(/\D/g, "").slice(0, 8);
+    e.target.value = d.length > 5 ? d.slice(0, 5) + "-" + d.slice(5) : d;
+    if (d.length === 8) buscarCep();
+  });
+  $("#uf").addEventListener("input", (e) => (e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "")));
+  $("#checkout").addEventListener("input", (e) => {
+    if (e.target.classList.contains("erro") && e.target.value.trim()) e.target.classList.remove("erro");
+    salvarCliente();
+  });
 
   // ---------- Início ----------
   if (LOJA.logo) $("#marca").innerHTML = `<img src="${LOJA.logo}" alt="${LOJA.nome}" />`;
@@ -246,6 +395,8 @@
     renderCatalogo();
   });
   $("#ano").textContent = new Date().getFullYear();
+  carregarCliente();
+  renderPagamentos();
   renderFiltros();
   renderCatalogo();
   renderSacola();

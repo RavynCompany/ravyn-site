@@ -8,8 +8,19 @@ const LOJA = {
   whatsapp: "5519999404625",
   // Caminho do logo. Deixe "" para usar o logo em texto.
   logo: "img/logo-transparente.png",
-  // Parcelamento mostrado nos cards (0 para esconder)
-  parcelas: 3,
+  // Formas de pagamento e taxas da maquininha (em %).
+  // A taxa é somada ao total para você receber o valor cheio da peça.
+  // Para não cobrar taxa numa forma, coloque 0.
+  // No crédito, cada número de parcelas tem a sua taxa. Apague linhas para limitar as parcelas.
+  pagamento: {
+    pix: 0,
+    debito: 1.99,
+    credito: {
+      1: 4.99,
+      2: 6.09,
+      3: 7.09,
+    },
+  },
   instagram: "https://www.instagram.com/ravyncompany/",
   // true = esconde o catálogo e mostra "Drop chegando em breve" (use enquanto não tiver as peças)
   emBreve: false,

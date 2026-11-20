@@ -79,15 +79,70 @@
       <h3>Sua sacola</h3>
       <button class="fechar" id="fecharSacola" aria-label="Fechar sacola">✕</button>
     </div>
-    <div class="sacola-itens" id="itens"></div>
+    <div class="sacola-corpo">
+      <div class="sacola-itens" id="itens"></div>
+
+      <form class="checkout" id="checkout" novalidate autocomplete="on">
+        <fieldset>
+          <legend><span class="passo">1</span> Seus dados</legend>
+          <label class="campo">Nome completo
+            <input type="text" id="nomeCliente" name="name" placeholder="Como podemos te chamar?" autocomplete="name" required />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend><span class="passo">2</span> Endereço de entrega</legend>
+          <div class="linha-campos">
+            <label class="campo campo-cep">CEP
+              <input type="text" id="cep" name="postal-code" inputmode="numeric" placeholder="00000-000" maxlength="9" autocomplete="postal-code" required />
+            </label>
+            <span class="cep-status" id="cepStatus"></span>
+          </div>
+          <label class="campo">Rua / Avenida
+            <input type="text" id="rua" autocomplete="address-line1" required />
+          </label>
+          <div class="linha-campos">
+            <label class="campo campo-num">Número
+              <input type="text" id="numero" inputmode="numeric" required />
+            </label>
+            <label class="campo">Complemento
+              <input type="text" id="complemento" placeholder="Opcional: apto, bloco…" autocomplete="address-line2" />
+            </label>
+          </div>
+          <label class="campo">Bairro
+            <input type="text" id="bairro" autocomplete="address-level3" required />
+          </label>
+          <div class="linha-campos">
+            <label class="campo">Cidade
+              <input type="text" id="cidade" autocomplete="address-level2" required />
+            </label>
+            <label class="campo campo-uf">UF
+              <input type="text" id="uf" maxlength="2" autocomplete="address-level1" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><span class="passo">3</span> Forma de pagamento</legend>
+          <div class="pagamentos" id="pagamentos" role="radiogroup" aria-label="Forma de pagamento"></div>
+          <label class="campo" id="campoParcelas" hidden>Parcelas
+            <select id="parcelas"></select>
+          </label>
+          <p class="nota-taxa" id="notaTaxa"></p>
+        </fieldset>
+
+        <label class="campo">Observação
+          <textarea id="obs" rows="2" placeholder="Opcional: ponto de referência, presente…"></textarea>
+        </label>
+      </form>
+    </div>
+
     <div class="sacola-rodape" id="sacolaRodape">
-      <label class="campo">Seu nome
-        <input type="text" id="nomeCliente" placeholder="Como podemos te chamar?" autocomplete="name" />
-      </label>
-      <label class="campo">Observação (opcional)
-        <textarea id="obs" rows="2" placeholder="Ex.: entrega, troca, presente…"></textarea>
-      </label>
-      <div class="total"><span>Total</span><strong id="total">R$ 0,00</strong></div>
+      <div class="resumo">
+        <div><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+        <div id="linhaTaxa" hidden><span id="rotuloTaxa">Taxa do cartão</span><span id="valorTaxa">R$ 0,00</span></div>
+      </div>
+      <div class="total"><span>Total <small id="formaResumo"></small></span><strong id="total">R$ 0,00</strong></div>
       <button class="btn btn-whats" id="finalizar">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.1 5.1 0 0 0 1.1 2.7 11.7 11.7 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.7-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.3-.2-.5-.3Z"/></svg>
         Fechar pedido no WhatsApp
