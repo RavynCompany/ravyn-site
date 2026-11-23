@@ -27,10 +27,10 @@ const LOJA = {
   // Slogan grafite da página inicial: "rua-veste" (A RUA VESTE RAVYN) ou "seu-corre" (SEU CORRE SEU ESTILO)
   tituloGrafite: "seu-corre",
   // Contador de visitas (opcional). Deixe "" para desligar.
-  // googleAnalytics: o "ID da métrica" do Google Analytics 4 (começa com G-, ex.: "G-ABC123XYZ")
+  // googleAnalytics: o código da tag do Google (começa com GTM- ou G-, ex.: "GTM-542C4GV4")
   // metaPixel: o número do Pixel da Meta (Facebook/Instagram), ex.: "1234567890123456"
   analytics: {
-    googleAnalytics: "",
+    googleAnalytics: "GTM-542C4GV4",
     metaPixel: "",
   },
   // Frases da faixa rolante no topo

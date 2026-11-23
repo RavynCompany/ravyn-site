@@ -551,14 +551,16 @@
   function iniciarAnalytics() {
     const cfg = LOJA.analytics || {};
     if (cfg.googleAnalytics) {
+      const id = encodeURIComponent(cfg.googleAnalytics);
+      const conteiner = /^GTM-/i.test(cfg.googleAnalytics); // tag do Google (contêiner) ou ID G- direto
       const s = document.createElement("script");
       s.async = true;
-      s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.googleAnalytics)}`;
+      s.src = conteiner ? `https://www.googletagmanager.com/gtm.js?id=${id}` : `https://www.googletagmanager.com/gtag/js?id=${id}`;
       document.head.appendChild(s);
       window.dataLayer = window.dataLayer || [];
       window.gtag = function () { window.dataLayer.push(arguments); };
       window.gtag("js", new Date());
-      window.gtag("config", cfg.googleAnalytics);
+      if (!conteiner) window.gtag("config", cfg.googleAnalytics);
     }
     if (cfg.metaPixel) {
       /* código oficial do Pixel da Meta */
