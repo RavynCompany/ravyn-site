@@ -26,6 +26,22 @@ const LOJA = {
   emBreve: false,
   // Slogan grafite da página inicial: "rua-veste" (A RUA VESTE RAVYN) ou "seu-corre" (SEU CORRE SEU ESTILO)
   tituloGrafite: "seu-corre",
+  // Entrega: cidades atendidas e taxa de cada uma (em R$).
+  // null = "a combinar" no WhatsApp (não soma no total). 0 = entrega grátis.
+  // O site confere a cidade do CEP: fora da lista, o cliente só consegue escolher a retirada.
+  entrega: {
+    cidades: {
+      "Americana": null,
+      "Santa Bárbara d'Oeste": null,
+      "Nova Odessa": null,
+      "Sumaré": null,
+    },
+    // Retirada: o cliente busca a peça com você, sem taxa. ativa: false para desligar.
+    retirada: { ativa: true, texto: "Sem taxa. Local e horário combinados no WhatsApp." },
+  },
+  // Contagem regressiva de lançamento no topo do site. Deixe data: "" para desligar.
+  // data no formato "AAAA-MM-DDTHH:MM" (horário de Brasília), ex.: "2026-12-20T19:00"
+  lancamento: { titulo: "Nova drop", data: "" },
   // Contador de visitas (opcional). Deixe "" para desligar.
   // googleAnalytics: o código da tag do Google (começa com GTM- ou G-, ex.: "GTM-542C4GV4")
   // metaPixel: o número do Pixel da Meta (Facebook/Instagram), ex.: "1234567890123456"

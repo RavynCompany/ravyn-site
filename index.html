@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=202611231946" />
+  <link rel="stylesheet" href="css/style.css?v=202611232010" />
 </head>
 <body>
   <div class="faixa" aria-hidden="true"><div class="faixa-trilho" id="faixa"></div></div>
@@ -42,6 +42,8 @@
       <span class="contador" id="contador">0</span>
     </button>
   </header>
+
+  <a class="contagem" id="contagem" href="#catalogo" hidden></a>
 
   <section class="hero">
     <div class="spray s1"></div><div class="spray s2"></div><div class="spray s3"></div>
@@ -66,6 +68,14 @@
     </div>
     <div class="grade" id="grade"></div>
   </main>
+
+  <section id="na-rua" class="na-rua">
+    <div class="na-rua-cabecalho">
+      <h2><span class="fita fita-azul">Na rua com Ravyn</span></h2>
+      <p>Quem veste, mostra. Marca <strong id="arrobaInsta">@ravyncompany</strong> nos stories que sua foto pode aparecer aqui.</p>
+    </div>
+    <div class="na-rua-grade" id="naRuaGrade"></div>
+  </section>
 
   <section id="avaliacoes" class="avaliacoes">
     <div class="aval-cabecalho">
@@ -97,7 +107,7 @@
       </details>
       <details>
         <summary>Onde vocês entregam?</summary>
-        <p>Entregamos em <strong>Americana e região</strong>. O endereço você informa na sacola e o valor da entrega é combinado no WhatsApp.</p>
+        <p>Entregamos em <strong>Americana, Santa Bárbara d'Oeste, Nova Odessa e Sumaré</strong>. Você informa o endereço na sacola e o site confere se a sua cidade está na área. Se preferir, escolha <strong>Retirar</strong> na sacola e busque a peça com a gente, sem taxa.</p>
       </details>
       <details>
         <summary>Posso trocar a peça?</summary>
@@ -143,8 +153,10 @@
         </fieldset>
 
         <fieldset>
-          <legend><span class="passo">2</span> Endereço de entrega</legend>
-          <p class="nota-entrega">📍 Entregamos em Americana e região. À pronta entrega.</p>
+          <legend><span class="passo">2</span> Entrega</legend>
+          <div class="modos-entrega" id="modosEntrega" role="radiogroup" aria-label="Como receber"></div>
+          <p class="nota-entrega" id="notaEntrega"></p>
+          <div class="campos-endereco" id="camposEndereco">
           <div class="linha-campos">
             <label class="campo campo-cep">CEP
               <input type="text" id="cep" name="postal-code" inputmode="numeric" placeholder="00000-000" maxlength="9" autocomplete="postal-code" required />
@@ -173,6 +185,8 @@
               <input type="text" id="uf" maxlength="2" autocomplete="address-level1" required />
             </label>
           </div>
+          <p class="aviso-regiao" id="avisoRegiao" hidden></p>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -193,6 +207,7 @@
     <div class="sacola-rodape" id="sacolaRodape">
       <div class="resumo">
         <div><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+        <div id="linhaFrete" hidden><span id="rotuloFrete">Entrega</span><span id="valorFrete">R$ 0,00</span></div>
         <div id="linhaTaxa" hidden><span id="rotuloTaxa">Taxa do cartão</span><span id="valorTaxa">R$ 0,00</span></div>
       </div>
       <div class="total"><span>Total <small id="formaResumo"></small></span><strong id="total">R$ 0,00</strong></div>
@@ -254,9 +269,10 @@
 
   <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=202611231946"></script>
-  <script src="js/products.js?v=202611231946"></script>
-  <script src="js/avaliacoes.js?v=202611231946"></script>
-  <script src="js/app.js?v=202611231946"></script>
+  <script src="js/config.js?v=202611232010"></script>
+  <script src="js/products.js?v=202611232010"></script>
+  <script src="js/avaliacoes.js?v=202611232010"></script>
+  <script src="js/galeria.js?v=202611232010"></script>
+  <script src="js/app.js?v=202611232010"></script>
 </body>
 </html>

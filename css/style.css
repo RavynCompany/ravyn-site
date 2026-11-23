@@ -268,6 +268,45 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 .produto-aval p { font-size: 14px; margin: 4px 0; }
 .produto-aval small { color: var(--cinza); }
 
+/* ---------- Entrega: modo, aviso de região ---------- */
+.modos-entrega { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modos-entrega:empty { display: none; }
+.campos-endereco { display: flex; flex-direction: column; gap: 12px; }
+.aviso-regiao { font-size: 13px; color: #ff8a95; background: rgba(255, 77, 94, .08); border: 1px solid rgba(255, 77, 94, .4); border-radius: var(--raio); padding: 10px 12px; }
+
+/* ---------- Me avisa quando chegar ---------- */
+.btn-avise { border-color: var(--neon); color: var(--neon); }
+.btn-avise:hover { background: var(--neon); color: var(--preto); }
+.link-avise { display: block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--neon); text-decoration: underline; text-underline-offset: 3px; text-align: left; }
+
+/* ---------- Na rua com Ravyn ---------- */
+.na-rua { padding: clamp(48px, 6vw, 88px) clamp(16px, 4vw, 48px); border-top: 2px solid var(--branco); }
+.na-rua-cabecalho { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+.na-rua-cabecalho p { color: var(--cinza); max-width: 420px; }
+.na-rua-cabecalho strong { color: var(--neon); }
+.na-rua-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.na-rua-foto { position: relative; display: block; margin: 0; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--raio); border: 2px solid var(--linha); background: var(--carvao); }
+.na-rua-foto:nth-child(odd) { transform: rotate(-1deg); }
+.na-rua-foto:nth-child(even) { transform: rotate(1deg); }
+.na-rua-foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.na-rua-foto:hover img { transform: scale(1.04); }
+.na-rua-foto figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 10px; background: linear-gradient(transparent, rgba(0,0,0,.85)); font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+.na-rua-foto figcaption span { font-family: var(--bloco); text-transform: uppercase; color: var(--neon); font-size: 14px; }
+.na-rua-vazio { aspect-ratio: 4 / 5; border: 2px dashed var(--linha); border-radius: var(--raio); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 16px; color: var(--cinza); background: repeating-linear-gradient(-45deg, transparent 0 14px, rgba(255,255,255,.02) 14px 28px); }
+.na-rua-vazio strong { font-family: var(--spray); font-weight: 400; font-size: 28px; color: var(--branco); }
+@media (max-width: 640px) {
+  .na-rua-grade { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .na-rua-vazio:not(:nth-child(2)) { display: none; }
+  .na-rua-vazio { grid-column: 1 / -1; aspect-ratio: auto; min-height: 220px; }
+}
+
+/* ---------- Contagem regressiva ---------- */
+.contagem { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 12px 16px; background: var(--azul); color: #fff; text-align: center; border-bottom: 2px solid var(--preto); }
+.contagem strong { font-family: var(--bloco); font-weight: 400; text-transform: uppercase; font-size: 18px; letter-spacing: .04em; }
+.contagem-num { font-variant-numeric: tabular-nums; font-size: 15px; }
+.contagem-num b { font-family: var(--bloco); font-weight: 400; font-size: 22px; background: var(--preto); color: var(--neon); padding: 0 6px; border-radius: 4px; margin-left: 2px; }
+.contagem-cta { font-weight: 800; text-decoration: underline; }
+
 /* ---------- Entrega e trocas ---------- */
 .faq { padding: clamp(48px, 6vw, 88px) clamp(16px, 4vw, 48px); border-top: 2px solid var(--branco); }
 .faq-lista { margin-top: 32px; display: grid; gap: 12px; max-width: 820px; }

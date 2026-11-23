@@ -90,7 +90,7 @@
             <div class="tamanhos" role="radiogroup" aria-label="Tamanho">
               ${p.tamanhos.map((t) => botaoTam(p, t)).join("")}
             </div>
-            ${semEstoque ? `<button class="btn-add" disabled>Esgotado</button>` : `<button class="btn-add" data-add="${p.id}">Adicionar à sacola</button>`}
+            ${semEstoque ? `<button class="btn-add btn-avise" data-avise="${p.id}">Me avisa quando chegar</button>` : `<button class="btn-add" data-add="${p.id}">Adicionar à sacola</button>`}
           </div>
         </article>`;
       })
@@ -174,8 +174,60 @@
       .join("");
   }
 
+  // ---------- Entrega ----------
+  const ENTREGA = LOJA.entrega || { cidades: {}, retirada: { ativa: false } };
+  const RETIRADA = !!(ENTREGA.retirada && ENTREGA.retirada.ativa);
+  let modoEntrega = "entrega";
+  const normaliza = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+  function cidadeAtendida() {
+    const c = normaliza($("#cidade").value);
+    const uf = $("#uf").value.trim().toUpperCase();
+    if (!c || (uf && uf !== "SP")) return null;
+    return Object.keys(ENTREGA.cidades || {}).find((k) => normaliza(k) === c) || null;
+  }
+  // número = taxa | null = a combinar | undefined = sem taxa definida (cidade não atendida / vazia)
+  function freteAtual() {
+    if (modoEntrega === "retirada") return 0;
+    const c = cidadeAtendida();
+    return c ? ENTREGA.cidades[c] : undefined;
+  }
+  const freteNumero = () => { const f = freteAtual(); return typeof f === "number" ? f : 0; };
+  const baseCobranca = () => subtotal() + freteNumero();
+  const textoFrete = (f) => (f === null ? "a combinar" : f === 0 ? "grátis" : brl(f));
+  const nomesCidades = () => {
+    const l = Object.keys(ENTREGA.cidades || {});
+    return l.length > 1 ? l.slice(0, -1).join(", ") + " e " + l[l.length - 1] : l.join("");
+  };
+
+  function renderModosEntrega() {
+    const modos = [["entrega", "Entregar", "No meu endereço"]];
+    if (RETIRADA) modos.push(["retirada", "Retirar", "Busco com vocês"]);
+    if (!RETIRADA) modoEntrega = "entrega";
+    $("#modosEntrega").innerHTML = modos.length < 2 ? "" : modos
+      .map(([v, n, d]) => `<label class="pag ${modoEntrega === v ? "ativo" : ""}">
+          <input type="radio" name="modoEntrega" value="${v}" ${modoEntrega === v ? "checked" : ""} />
+          <span class="pag-nome">${n}</span><span class="pag-det">${d}</span></label>`)
+      .join("");
+  }
+
+  function atualizarEntrega() {
+    const retirar = modoEntrega === "retirada";
+    $("#camposEndereco").hidden = retirar;
+    const cidades = Object.entries(ENTREGA.cidades || {});
+    const todasCombinar = cidades.every(([, v]) => v === null);
+    $("#notaEntrega").textContent = retirar
+      ? `📍 Retirada: ${(ENTREGA.retirada && ENTREGA.retirada.texto) || "combinada no WhatsApp."}`
+      : todasCombinar
+        ? `📍 Entregamos em ${nomesCidades()}. Pronta entrega. Taxa combinada no WhatsApp.`
+        : `📍 Entregamos em: ${cidades.map(([c, v]) => `${c} (${textoFrete(v)})`).join(", ")}. Pronta entrega.`;
+    const cidadeDigitada = $("#cidade").value.trim();
+    const fora = !retirar && cidadeDigitada && !cidadeAtendida();
+    $("#avisoRegiao").hidden = !fora;
+    if (fora) $("#avisoRegiao").textContent = `Ainda não entregamos em ${cidadeDigitada}. ${RETIRADA ? "Você pode escolher Retirar ou chamar" : "Chame"} a gente no WhatsApp pra combinar.`;
+  }
+
   function renderParcelas() {
-    const sub = subtotal();
+    const sub = baseCobranca();
     const sel = $("#parcelas");
     const atual = sel.value || "1";
     sel.innerHTML = Object.keys(PAG.credito || {})
@@ -188,12 +240,17 @@
   }
 
   function atualizarTotais() {
-    const sub = subtotal();
+    const sub = baseCobranca();
+    atualizarEntrega();
     renderParcelas();
     $("#campoParcelas").hidden = forma !== "credito";
     const taxa = taxaAtual();
     const tot = comTaxa(sub, taxa);
-    $("#subtotal").textContent = brl(sub);
+    const f = freteAtual();
+    $("#subtotal").textContent = brl(subtotal());
+    $("#linhaFrete").hidden = f === undefined;
+    $("#rotuloFrete").textContent = modoEntrega === "retirada" ? "Retirada" : "Entrega";
+    $("#valorFrete").textContent = f === undefined ? "" : textoFrete(f).replace(/^./, (c) => c.toUpperCase());
     $("#linhaTaxa").hidden = !(taxa > 0);
     $("#rotuloTaxa").textContent = `Taxa da maquininha (${String(taxa).replace(".", ",")}%)`;
     $("#valorTaxa").textContent = brl(tot - sub);
@@ -201,6 +258,7 @@
     const n = Number($("#parcelas").value) || 1;
     $("#formaResumo").textContent = !forma ? "" : forma === "credito" ? `· crédito ${n}x de ${brl(tot / n)}` : `· ${NOMES[forma].toLowerCase()}`;
     $("#notaTaxa").textContent = forma && forma !== "pix" && taxa > 0 ? "No cartão é acrescentada a taxa da maquininha. No Pix você paga o valor das peças, sem taxa." : "";
+    if (f === null && !$("#notaTaxa").textContent) $("#notaTaxa").textContent = "A taxa de entrega será combinada no WhatsApp e não está somada no total.";
   }
 
   // ---------- CEP (preenchimento automático) ----------
@@ -218,6 +276,7 @@
       $("#cidade").value = d.localidade || $("#cidade").value;
       $("#uf").value = d.uf || $("#uf").value;
       status.textContent = "✓ Endereço encontrado";
+      atualizarTotais();
       ["rua", "bairro", "cidade", "uf"].forEach((id) => $("#" + id).classList.remove("erro"));
       salvarCliente();
       $(d.logradouro ? "#numero" : "#rua").focus();
@@ -232,6 +291,7 @@
     const d = {};
     CAMPOS.forEach((id) => (d[id] = $("#" + id).value));
     d.forma = forma;
+    d.modoEntrega = modoEntrega;
     try { localStorage.setItem("ravyn-cliente", JSON.stringify(d)); } catch {}
   }
   function carregarCliente() {
@@ -239,6 +299,7 @@
     try { d = JSON.parse(localStorage.getItem("ravyn-cliente")) || {}; } catch {}
     CAMPOS.forEach((id) => { if (d[id]) $("#" + id).value = d[id]; });
     if (d.forma) forma = d.forma;
+    if (d.modoEntrega === "retirada" && RETIRADA) modoEntrega = "retirada";
   }
 
   function adicionar(id) {
@@ -288,7 +349,8 @@
       return avisar(`${p ? p.nome : "Uma peça"} (${acabou.tam}) esgotou. Remova da sacola para continuar.`);
     }
     const v = (id) => $("#" + id).value.trim();
-    const obrigatorios = ["nomeCliente", "cep", "rua", "numero", "bairro", "cidade", "uf"];
+    const retirar = modoEntrega === "retirada";
+    const obrigatorios = retirar ? ["nomeCliente"] : ["nomeCliente", "cep", "rua", "numero", "bairro", "cidade", "uf"];
     let primeiroErro = null;
     obrigatorios.forEach((id) => {
       const el = $("#" + id);
@@ -301,15 +363,21 @@
       primeiroErro.scrollIntoView({ block: "center", behavior: "smooth" });
       return avisar(primeiroErro.id === "nomeCliente" ? "Informe seu nome" : "Complete o endereço de entrega");
     }
+    if (!retirar && !cidadeAtendida()) {
+      $("#cidade").classList.add("erro");
+      $("#avisoRegiao").scrollIntoView({ block: "center", behavior: "smooth" });
+      return avisar(`Ainda não entregamos em ${v("cidade")}${RETIRADA ? ". Escolha Retirar ou fale com a gente" : ""}`);
+    }
     if (!forma) {
       $("#pagamentos").classList.add("erro");
       $("#pagamentos").scrollIntoView({ block: "center", behavior: "smooth" });
       return avisar("Escolha a forma de pagamento");
     }
 
-    const sub = subtotal();
+    const sub = baseCobranca();
     const taxa = taxaAtual();
     const tot = comTaxa(sub, taxa);
+    const frete = freteAtual();
     const n = Number($("#parcelas").value) || 1;
     const linhas = sacola.map((i) => {
       const p = PRODUTOS.find((x) => x.id === i.id);
@@ -327,18 +395,20 @@
       "*🛒 Itens*",
       ...linhas,
       "",
-      `Subtotal: ${brl(sub)}`,
+      `Subtotal: ${brl(subtotal())}`,
+      retirar ? "Retirada: sem taxa" : `Entrega (${cidadeAtendida()}): ${textoFrete(frete)}`,
       taxa > 0 ? `Taxa da maquininha (${String(taxa).replace(".", ",")}%): ${brl(tot - sub)}` : null,
       `*Total: ${brl(tot)}*`,
       "",
       "*💳 Pagamento*",
       pagamento,
       "",
-      "*📦 Entrega*",
-      v("nomeCliente"),
-      `${v("rua")}, ${v("numero")}${v("complemento") ? ` — ${v("complemento")}` : ""}`,
-      `${v("bairro")} — ${v("cidade")}/${v("uf").toUpperCase()}`,
-      `CEP ${cep}`,
+      ...(retirar
+        ? ["*📍 Retirada*", v("nomeCliente"), "Vou retirar a peça. Combinar local e horário."]
+        : ["*📦 Entrega*", v("nomeCliente"),
+           `${v("rua")}, ${v("numero")}${v("complemento") ? ` — ${v("complemento")}` : ""}`,
+           `${v("bairro")} — ${v("cidade")}/${v("uf").toUpperCase()}`,
+           `CEP ${cep}`]),
       obs ? "" : null,
       obs ? `*📝 Observação:* ${obs}` : null,
     ].filter((l) => l !== null).join("\n");
@@ -489,8 +559,9 @@
         <span class="produto-rotulo">Tamanho</span>
         <div class="tamanhos" role="radiogroup" aria-label="Tamanho">${p.tamanhos.map((t) => botaoTam(p, t)).join("")}</div>
         ${semEstoque ? `<p class="produto-aviso">Essa peça esgotou.</p>` : disp.length < p.tamanhos.length ? `<p class="produto-aviso">Últimas peças: só tem ${disp.join(" e ")}.</p>` : ""}
+        ${!semEstoque ? p.tamanhos.filter((t) => esgotado(p, t)).map((t) => `<button type="button" class="link-avise" data-avise="${p.id}" data-avise-tam="${t}">🔔 Quer o ${t}? Me avisa quando chegar</button>`).join("") : ""}
       </div>
-      ${semEstoque ? `<button class="btn btn-neon produto-add" disabled>Esgotado</button>` : `<button class="btn btn-neon produto-add" data-add="${p.id}">Adicionar à sacola</button>`}
+      ${semEstoque ? `<button class="btn btn-neon produto-add" data-avise="${p.id}">🔔 Me avisa quando chegar</button>` : `<button class="btn btn-neon produto-add" data-add="${p.id}">Adicionar à sacola</button>`}
       <button type="button" class="btn btn-contorno produto-compartilhar" id="compartilhar">Compartilhar peça</button>
       ${p.descricao ? `<p class="produto-descricao">${escapar(p.descricao)}</p>` : ""}
       <ul class="produto-infos">
@@ -547,6 +618,52 @@
     }
   }
 
+  // ---------- Na rua com Ravyn ----------
+  function renderGaleria() {
+    const fotos = (typeof GALERIA !== "undefined" ? GALERIA : []).filter((g) => g && g.foto);
+    const insta = LOJA.instagram || "";
+    const arroba = (insta.match(/instagram\.com\/([^/?#]+)/) || [])[1];
+    if (arroba) $("#arrobaInsta").textContent = "@" + arroba;
+    if (!fotos.length) {
+      $("#naRuaGrade").innerHTML = [1, 2, 3].map((i) => `<div class="na-rua-vazio">${i === 2
+        ? `<strong>Sua foto aqui</strong><span>Comprou? Posta com a peça e marca a gente.</span>${insta ? `<a class="btn btn-neon" href="${insta}" target="_blank" rel="noopener">Seguir no Instagram</a>` : ""}`
+        : ""}</div>`).join("");
+      return;
+    }
+    $("#naRuaGrade").innerHTML = fotos
+      .map((g) => {
+        const p = g.produto ? PRODUTOS.find((x) => x.id === g.produto) : null;
+        const conteudo = `<img src="${g.foto}" alt="${escapar(g.legenda || "Foto com peça Ravyn")}" loading="lazy" />${g.legenda || p ? `<figcaption>${escapar(g.legenda || "")}${p ? `<span>${escapar(p.nome)} →</span>` : ""}</figcaption>` : ""}`;
+        return p ? `<a class="na-rua-foto" href="${linkProduto(p)}">${conteudo}</a>` : `<figure class="na-rua-foto">${conteudo}</figure>`;
+      })
+      .join("");
+  }
+
+  // ---------- Contagem regressiva de lançamento ----------
+  function iniciarContagem() {
+    const cfg = LOJA.lancamento || {};
+    if (!cfg.data) return;
+    const alvo = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(cfg.data) ? cfg.data : cfg.data + ":00-03:00").getTime();
+    if (isNaN(alvo)) return;
+    const el = $("#contagem");
+    const dois = (n) => String(n).padStart(2, "0");
+    const tick = () => {
+      const falta = alvo - Date.now();
+      if (falta <= 0) {
+        if (-falta > 3 * 864e5) { el.hidden = true; return clearInterval(t); }
+        el.innerHTML = `<strong>${escapar(cfg.titulo || "Nova drop")} no ar!</strong><span class="contagem-cta">Ver agora →</span>`;
+        el.hidden = false;
+        return clearInterval(t);
+      }
+      const d = Math.floor(falta / 864e5), h = Math.floor(falta / 36e5) % 24, m = Math.floor(falta / 6e4) % 60, sg = Math.floor(falta / 1e3) % 60;
+      el.innerHTML = `<strong>${escapar(cfg.titulo || "Nova drop")} em</strong>
+        <span class="contagem-num">${d ? `<b>${d}</b>d ` : ""}<b>${dois(h)}</b>h <b>${dois(m)}</b>m <b>${dois(sg)}</b>s</span>`;
+      el.hidden = false;
+    };
+    const t = setInterval(tick, 1000);
+    tick();
+  }
+
   // ---------- Contador de visitas (Google Analytics / Pixel da Meta) ----------
   function iniciarAnalytics() {
     const cfg = LOJA.analytics || {};
@@ -586,7 +703,17 @@
     renderCatalogo();
   });
 
+  function aviseMe(id, tam) {
+    const p = PRODUTOS.find((x) => x.id === id);
+    if (!p) return;
+    const msg = `Oi, ${LOJA.nome}! Quero ser avisado(a) quando chegar: *${p.nome}*${tam ? ` no tamanho *${tam}*` : ""}.`;
+    rastrear("join_group", "Lead", p);
+    window.open(`https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
   function cliqueTamanhoOuAdicionar(e) {
+    const av = e.target.closest("[data-avise]");
+    if (av) return aviseMe(+av.dataset.avise, av.dataset.aviseTam || "");
     const t = e.target.closest("[data-tam]");
     if (t) {
       if (t.disabled) return;
@@ -647,6 +774,14 @@
     salvarCliente();
   });
   $("#parcelas").addEventListener("change", atualizarTotais);
+  $("#modosEntrega").addEventListener("change", (e) => {
+    if (e.target.name !== "modoEntrega") return;
+    modoEntrega = e.target.value;
+    renderModosEntrega();
+    atualizarTotais();
+    salvarCliente();
+  });
+  ["cidade", "uf"].forEach((id) => $("#" + id).addEventListener("input", atualizarTotais));
   $("#abrirAvaliar").addEventListener("click", abrirAvaliar);
   $("#fecharAvaliar").addEventListener("click", fecharAvaliar);
   $("#modalAvaliar").addEventListener("click", (e) => e.target.id === "modalAvaliar" && fecharAvaliar());
@@ -702,10 +837,13 @@
   });
   $("#ano").textContent = new Date().getFullYear();
   carregarCliente();
+  renderModosEntrega();
   renderPagamentos();
   renderFiltros();
   renderCatalogo();
   renderSacola();
   renderAvaliacoes();
+  renderGaleria();
+  iniciarContagem();
   seguirHash(); // abre a peça se o link veio com #produto-ID
 })();
