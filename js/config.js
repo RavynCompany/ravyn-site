@@ -25,7 +25,7 @@ const LOJA = {
   // true = esconde o catálogo e mostra "Drop chegando em breve" (use enquanto não tiver as peças)
   emBreve: false,
   // Título grafite da página inicial: "bolha" ou "bloco"
-  tituloGrafite: "bolha",
+  tituloGrafite: "bloco",
   // Frases da faixa rolante no topo
   faixa: ["Nova drop disponível", "Peças originais", "Finalize pelo WhatsApp", "Envio para todo o Brasil"],
 };
