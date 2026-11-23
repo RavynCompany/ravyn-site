@@ -24,8 +24,8 @@ const LOJA = {
   instagram: "https://www.instagram.com/ravyncompany/",
   // true = esconde o catálogo e mostra "Drop chegando em breve" (use enquanto não tiver as peças)
   emBreve: false,
-  // Estilo da fonte grafite dos títulos: 1 = bolha escorrendo, 2 = tag/wildstyle, 3 = bloco com tinta escorrendo
-  fonteGrafite: 1,
+  // Título grafite da página inicial: "bolha" ou "bloco"
+  tituloGrafite: "bolha",
   // Frases da faixa rolante no topo
   faixa: ["Nova drop disponível", "Peças originais", "Finalize pelo WhatsApp", "Envio para todo o Brasil"],
 };

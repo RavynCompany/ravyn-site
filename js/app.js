@@ -513,7 +513,7 @@
   });
 
   // ---------- Início ----------
-  document.body.dataset.fonte = LOJA.fonteGrafite || 1;
+  if (LOJA.tituloGrafite) $("#tituloGrafite").src = `img/titulo-${LOJA.tituloGrafite}.webp`;
   if (LOJA.logo) $("#marca").innerHTML = `<img src="${LOJA.logo}" alt="${LOJA.nome}" />`;
   const zap = `https://wa.me/${LOJA.whatsapp}`;
   $("#linkWhats").href = zap;

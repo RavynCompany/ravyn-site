@@ -98,33 +98,9 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
    
 }
 
-/* ---------- Títulos grafite (3 estilos, escolhidos em js/config.js) ---------- */
-.hero h1.grafite { font-family: var(--grafite); text-transform: none; line-height: .95; letter-spacing: 0; position: relative; z-index: 1; }
-.hero h1.grafite .linha { display: block; white-space: nowrap; }
-
-/* contorno preto grosso + sombra deslocada nas cores do logo */
-body[data-fonte="1"] { --grafite: "Rubik Bubbles", var(--bloco); }
-body[data-fonte="1"] .hero h1.grafite { font-size: clamp(60px, 7.4vw, 112px); margin-bottom: 14px; color: var(--branco); transform: rotate(-3deg); transform-origin: left;
-  text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 0 4px 0 #000,
-    7px 7px 0 var(--rosa), 11px 11px 0 #000; }
-body[data-fonte="1"] .hero h1.grafite .destaque { color: var(--neon); text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 7px 7px 0 var(--azul), 11px 11px 0 #000; }
-
-body[data-fonte="2"] { --grafite: "Sedgwick Ave Display", var(--spray); }
-body[data-fonte="2"] .hero h1.grafite { font-size: clamp(72px, 10.5vw, 150px); line-height: .9; margin-bottom: 18px; color: var(--branco); transform: rotate(-5deg) skewX(-6deg); transform-origin: left;
-  text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000,
-    6px 6px 0 var(--neon), 10px 10px 0 var(--rosa), 14px 14px 0 #000; }
-body[data-fonte="2"] .hero h1.grafite .destaque { margin-left: .35em; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 6px 6px 0 var(--azul), 10px 10px 0 var(--neon), 14px 14px 0 #000; }
-
-body[data-fonte="3"] { --grafite: "Rubik Wet Paint", var(--bloco); }
-body[data-fonte="3"] .hero h1.grafite { font-size: clamp(54px, 6.6vw, 100px); line-height: 1.05; margin-bottom: 42px; text-transform: uppercase; color: var(--neon); transform: rotate(-2deg); transform-origin: left;
-  text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 0 5px 0 #000,
-    7px 7px 0 var(--rosa), 12px 12px 0 #000; }
-body[data-fonte="3"] .hero h1.grafite .destaque { color: var(--branco); text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 7px 7px 0 var(--azul), 12px 12px 0 #000; }
-
-/* títulos das seções no mesmo estilo grafite */
-h2 .fita { font-family: var(--grafite, var(--bloco)); }
-body[data-fonte="1"] h2 .fita, body[data-fonte="2"] h2 .fita { text-transform: none; }
-body[data-fonte="2"] h2 .fita { padding: 6px 22px 2px; }
+/* ---------- Título grafite (letras recortadas das referências) ---------- */
+.hero h1.grafite { margin: 18px 0 8px; line-height: 0; }
+.hero h1.grafite img { width: min(100%, 640px); height: auto; transform: rotate(-2deg); transform-origin: left; filter: drop-shadow(6px 8px 0 rgba(0,0,0,.6)); }
 
 /* ---------- Adesivos e fitas ---------- */
 .adesivo {
