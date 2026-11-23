@@ -151,7 +151,14 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 }
 .card:hover .card-foto { border-color: var(--neon); transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--neon); }
 .card:nth-child(3n+2):hover .card-foto { border-color: var(--azul); box-shadow: 6px 6px 0 var(--azul); }
-.card-foto img { width: 100%; height: 100%; object-fit: cover; }
+.card-foto { display: block; }
+.card-foto img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.card-foto:has(img) { aspect-ratio: 2 / 3; background: #e9e9ec; }
+.card-foto .foto-costas { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
+@media (hover: hover) { .card:hover .foto-costas { opacity: 1; } }
+.card-nome a:hover { color: var(--neon); }
+.card-esgotado .card-foto > img, .card-esgotado .placeholder { filter: grayscale(1) brightness(.6); }
+.adesivo-esgotado { background: var(--branco) !important; color: var(--preto); }
 .placeholder { width: 100%; height: 100%; display: grid; place-items: center; position: relative; }
 .placeholder::before {
   content: attr(data-tag); position: absolute; font-family: var(--spray); font-size: 64px; color: rgba(255,255,255,.04);
@@ -172,11 +179,16 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 }
 .tam:hover { border-color: var(--branco); }
 .tam.ativo { background: var(--branco); color: var(--preto); border-color: var(--branco); }
+.tam.esgotado { color: #555; border-color: #262626; border-style: dashed; cursor: not-allowed; text-decoration: line-through; text-decoration-thickness: 2px; }
+.tam.esgotado:hover { border-color: #262626; }
 .btn-add {
   margin-top: auto; padding: 12px; border: 2px solid var(--branco); border-radius: var(--raio);
   font-family: var(--bloco); font-size: 16px; text-transform: uppercase; letter-spacing: .06em; transition: all .12s;
 }
 .btn-add:hover { background: var(--neon); color: var(--preto); border-color: var(--neon); }
+.btn-add:disabled, .btn:disabled { opacity: .45; cursor: not-allowed; background: transparent; color: var(--cinza); border-color: var(--linha); box-shadow: none; transform: none; }
+.item-esgotado { color: #ff4d5e; }
+.nota-entrega { font-size: 13px; color: var(--cinza); margin: -4px 0 2px; }
 .btn-add:active { transform: scale(.97); }
 
 /* ---------- Em breve ---------- */
@@ -222,6 +234,51 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 .estrelas-input button:hover { transform: scale(1.15) rotate(-6deg); }
 .estrelas-input.erro button { color: #6b2a31; }
 .campo textarea.erro, .campo select.erro { border-color: #ff4d5e; }
+
+/* ---------- Página da peça ---------- */
+.produto-fundo { position: fixed; inset: 0; z-index: 42; background: rgba(0,0,0,.8); overflow-y: auto; overscroll-behavior: contain; padding: 32px 16px; }
+.produto { position: relative; max-width: 1080px; margin: 0 auto; background: var(--carvao); border: 3px solid var(--neon); border-radius: var(--raio); box-shadow: 10px 10px 0 var(--azul); display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+.produto-fechar { position: absolute; top: 12px; right: 12px; z-index: 3; width: 44px; height: 44px; border-radius: 50%; background: var(--preto); color: var(--branco); font-size: 18px; border: 2px solid var(--linha); }
+.produto-fechar:hover { border-color: var(--neon); color: var(--neon); }
+.produto-galeria { min-width: 0; padding: 16px; }
+.galeria-slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: var(--raio); background: #e9e9ec; }
+.galeria-slides::-webkit-scrollbar { display: none; }
+.slide { flex: 0 0 100%; scroll-snap-align: start; aspect-ratio: 2 / 3; }
+.slide img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.slide .placeholder { height: 100%; }
+.galeria-miniaturas { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; }
+.mini { flex: 0 0 64px; aspect-ratio: 2 / 3; border-radius: 4px; overflow: hidden; border: 2px solid transparent; opacity: .6; padding: 0; }
+.mini img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.mini.ativo { border-color: var(--neon); opacity: 1; }
+.produto-info { padding: 28px 28px 28px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.produto-nome { font-family: var(--bloco); font-weight: 400; font-size: clamp(30px, 3.4vw, 44px); text-transform: uppercase; line-height: 1.05; padding-right: 44px; }
+.produto-preco { font-size: 30px; font-weight: 800; color: var(--neon); }
+.produto-bloco { margin-top: 8px; }
+.produto-rotulo { display: block; font-size: 12px; color: var(--cinza); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; margin-bottom: 6px; }
+.produto-bloco .tamanhos { margin: 0; }
+.produto-bloco .tam { min-width: 56px; height: 46px; font-size: 16px; }
+.produto-aviso { font-size: 13px; color: var(--neon); margin-top: 8px; }
+.produto-add { width: 100%; margin-top: 6px; }
+.produto-compartilhar { width: 100%; }
+.produto-descricao { color: #cfcfc9; font-size: 15px; margin-top: 6px; }
+.produto-infos { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding: 14px; background: var(--preto); border-radius: var(--raio); border-left: 4px solid var(--rosa); font-size: 14px; color: var(--cinza); }
+.produto-infos strong { color: var(--branco); }
+.produto-avals { margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+.produto-aval { background: var(--preto); padding: 12px; border-radius: var(--raio); }
+.produto-aval p { font-size: 14px; margin: 4px 0; }
+.produto-aval small { color: var(--cinza); }
+
+/* ---------- Entrega e trocas ---------- */
+.faq { padding: clamp(48px, 6vw, 88px) clamp(16px, 4vw, 48px); border-top: 2px solid var(--branco); }
+.faq-lista { margin-top: 32px; display: grid; gap: 12px; max-width: 820px; }
+.faq details { background: var(--carvao); border: 2px solid var(--linha); border-radius: var(--raio); }
+.faq details[open] { border-color: var(--neon); }
+.faq summary { cursor: pointer; list-style: none; padding: 16px 52px 16px 18px; font-family: var(--bloco); text-transform: uppercase; font-size: 20px; position: relative; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 26px; color: var(--neon); }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { padding: 0 18px 18px; color: #cfcfc9; font-size: 15px; }
+.faq details strong { color: var(--branco); }
 
 /* ---------- Como comprar ---------- */
 .como { padding: clamp(48px, 6vw, 88px) clamp(16px, 4vw, 48px); border-top: 2px solid var(--branco); background: var(--carvao); }
@@ -352,6 +409,16 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 @media (max-width: 820px) {
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .hero-logo { display: none; }
+}
+@media (max-width: 820px) {
+  .produto-fundo { padding: 0; }
+  .produto { grid-template-columns: 1fr; border-width: 0; border-radius: 0; box-shadow: none; min-height: 100%; }
+  .produto-galeria { padding: 0; }
+  .galeria-slides { border-radius: 0; }
+  .galeria-miniaturas { padding: 0 16px; }
+  .produto-info { padding: 18px 16px calc(28px + env(safe-area-inset-bottom)); }
+  .produto-fechar { position: fixed; top: 12px; right: 12px; }
+  .produto-nome { padding-right: 0; }
 }
 @media (max-width: 640px) {
   .modal-fundo { padding: 0; grid-template-columns: 100%; align-content: end; }

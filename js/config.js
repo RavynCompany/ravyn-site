@@ -26,6 +26,13 @@ const LOJA = {
   emBreve: false,
   // Slogan grafite da página inicial: "rua-veste" (A RUA VESTE RAVYN) ou "seu-corre" (SEU CORRE SEU ESTILO)
   tituloGrafite: "seu-corre",
+  // Contador de visitas (opcional). Deixe "" para desligar.
+  // googleAnalytics: o "ID da métrica" do Google Analytics 4 (começa com G-, ex.: "G-ABC123XYZ")
+  // metaPixel: o número do Pixel da Meta (Facebook/Instagram), ex.: "1234567890123456"
+  analytics: {
+    googleAnalytics: "",
+    metaPixel: "",
+  },
   // Frases da faixa rolante no topo
-  faixa: ["Nova drop disponível", "Peças originais", "Finalize pelo WhatsApp", "Envio para todo o Brasil"],
+  faixa: ["Pronta entrega", "Entrega em Americana e região", "Peças originais", "Pedido pelo WhatsApp"],
 };

@@ -3,13 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ravyn Company | Streetwear</title>
-  <meta name="description" content="Ravyn Company — streetwear. Escolha suas peças e finalize pelo WhatsApp." />
+  <title>Ravyn Company | Seu corre, seu estilo</title>
+  <meta name="description" content="Streetwear à pronta entrega em Americana e região. Escolha suas peças e feche o pedido pelo WhatsApp." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="canonical" href="https://ravyncompany.github.io/ravyn-site/" />
+  <!-- Prévia ao compartilhar o link (WhatsApp, Instagram, Facebook) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Ravyn Company" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:title" content="Ravyn Company | Seu corre, seu estilo" />
+  <meta property="og:description" content="Streetwear à pronta entrega em Americana e região. Escolha suas peças e feche o pedido pelo WhatsApp." />
+  <meta property="og:url" content="https://ravyncompany.github.io/ravyn-site/" />
+  <meta property="og:image" content="https://ravyncompany.github.io/ravyn-site/img/compartilhar.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Ravyn Company: Seu corre, seu estilo" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Ravyn Company | Seu corre, seu estilo" />
+  <meta name="twitter:description" content="Streetwear à pronta entrega em Americana e região. Escolha suas peças e feche o pedido pelo WhatsApp." />
+  <meta name="twitter:image" content="https://ravyncompany.github.io/ravyn-site/img/compartilhar.jpg" />
   <link rel="icon" href="img/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=202611231536" />
+  <link rel="stylesheet" href="css/style.css?v=202611231937" />
 </head>
 <body>
   <div class="faixa" aria-hidden="true"><div class="faixa-trilho" id="faixa"></div></div>
@@ -70,9 +88,32 @@
     </ol>
   </section>
 
+  <section id="entrega" class="faq">
+    <h2><span class="fita">Entrega e trocas</span></h2>
+    <div class="faq-lista">
+      <details open>
+        <summary>Qual o prazo?</summary>
+        <p>Tudo é <strong>à pronta entrega</strong>: as peças já estão com a gente. Fechou o pedido no WhatsApp, a gente combina o dia da entrega.</p>
+      </details>
+      <details>
+        <summary>Onde vocês entregam?</summary>
+        <p>Entregamos em <strong>Americana e região</strong>. O endereço você informa na sacola e o valor da entrega é combinado no WhatsApp.</p>
+      </details>
+      <details>
+        <summary>Posso trocar a peça?</summary>
+        <p><strong>Não fazemos troca por tamanho ou por gosto</strong>, então confira o tamanho antes de fechar o pedido. Se a peça chegar com defeito, ou se você desistir da compra em até 7 dias depois de receber, chama a gente no WhatsApp que a gente resolve.</p>
+      </details>
+      <details>
+        <summary>Como posso pagar?</summary>
+        <p>Pix, cartão de débito ou cartão de crédito em até 3x. No cartão é acrescentada a taxa da maquininha.</p>
+      </details>
+    </div>
+  </section>
+
   <footer class="rodape">
     <img src="img/logo-transparente.png" alt="Ravyn Company" class="rodape-logo" />
     <div class="rodape-links">
+      <a href="#entrega">Entrega e trocas</a>
       <a id="linkWhats" href="#" target="_blank" rel="noopener">WhatsApp</a>
       <a id="linkInsta" href="#" target="_blank" rel="noopener" hidden>Instagram</a>
     </div>
@@ -103,6 +144,7 @@
 
         <fieldset>
           <legend><span class="passo">2</span> Endereço de entrega</legend>
+          <p class="nota-entrega">📍 Entregamos em Americana e região. À pronta entrega.</p>
           <div class="linha-campos">
             <label class="campo campo-cep">CEP
               <input type="text" id="cep" name="postal-code" inputmode="numeric" placeholder="00000-000" maxlength="9" autocomplete="postal-code" required />
@@ -161,6 +203,18 @@
     </div>
   </aside>
 
+  <!-- Página da peça (abre em #produto-ID, link compartilhável) -->
+  <div class="produto-fundo" id="paginaProduto" hidden>
+    <article class="produto" role="dialog" aria-modal="true" aria-labelledby="prodNome">
+      <button type="button" class="produto-fechar" id="fecharProduto" aria-label="Voltar ao catálogo">✕</button>
+      <div class="produto-galeria">
+        <div class="galeria-slides" id="galeria"></div>
+        <div class="galeria-miniaturas" id="miniaturas"></div>
+      </div>
+      <div class="produto-info" id="produtoInfo"></div>
+    </article>
+  </div>
+
   <!-- Avaliar compra -->
   <div class="modal-fundo" id="modalAvaliar" hidden>
     <form class="modal" id="formAvaliar" novalidate role="dialog" aria-modal="true" aria-labelledby="tituloAvaliar">
@@ -200,9 +254,9 @@
 
   <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=202611231536"></script>
-  <script src="js/products.js?v=202611231536"></script>
-  <script src="js/avaliacoes.js?v=202611231536"></script>
-  <script src="js/app.js?v=202611231536"></script>
+  <script src="js/config.js?v=202611231937"></script>
+  <script src="js/products.js?v=202611231937"></script>
+  <script src="js/avaliacoes.js?v=202611231937"></script>
+  <script src="js/app.js?v=202611231937"></script>
 </body>
 </html>

@@ -15,9 +15,30 @@
     try { localStorage.setItem(CHAVE, JSON.stringify(sacola)); } catch {}
   }
 
+  // ---------- Fotos e estoque ----------
+  const fotosDe = (p) => (p.fotos && p.fotos.length ? p.fotos : [p.imagem, p.imagem2]).filter(Boolean);
+  const esgotado = (p, t) => (p.esgotados || []).includes(t);
+  const disponiveis = (p) => p.tamanhos.filter((t) => !esgotado(p, t));
+  const linkProduto = (p) => `#produto-${p.id}`;
+
+  function botaoTam(p, t) {
+    const sem = esgotado(p, t);
+    const on = !sem && tamanhoEscolhido[p.id] === t;
+    return `<button type="button" class="tam ${on ? "ativo" : ""} ${sem ? "esgotado" : ""}" data-id="${p.id}" data-tam="${t}" role="radio" aria-checked="${on}" ${sem ? `disabled title="Esgotado" aria-label="${t} esgotado"` : ""}>${t}</button>`;
+  }
+  function preparaTamanho(p) {
+    const disp = disponiveis(p);
+    if (tamanhoEscolhido[p.id] && esgotado(p, tamanhoEscolhido[p.id])) delete tamanhoEscolhido[p.id];
+    if (disp.length === 1 && !tamanhoEscolhido[p.id]) tamanhoEscolhido[p.id] = disp[0];
+    return disp;
+  }
+
   // ---------- Imagem ----------
   function foto(p) {
-    if (p.imagem) return `<img src="${p.imagem}" alt="${p.nome}" loading="lazy" />`;
+    const f = fotosDe(p);
+    if (f.length)
+      return `<img class="foto-frente" src="${f[0]}" alt="${p.nome}" loading="lazy" />` +
+        (f[1] ? `<img class="foto-costas" src="${f[1]}" alt="" aria-hidden="true" loading="lazy" />` : "");
     // Imagem provisória: silhueta da peça na cor do produto
     const formas = {
       Camisetas: '<path d="M30 18 44 12c2 5 10 8 16 8s14-3 16-8l14 6 12 18-14 8-4-4v58H36V40l-4 4-14-8Z"/>',
@@ -54,22 +75,22 @@
     const lista = filtro === "Todos" ? PRODUTOS : PRODUTOS.filter((p) => p.categoria === filtro);
     $("#grade").innerHTML = lista
       .map((p) => {
-        if (p.tamanhos.length === 1) tamanhoEscolhido[p.id] = p.tamanhos[0];
+        const disp = preparaTamanho(p);
+        const semEstoque = !disp.length;
+        const selo = semEstoque ? `<span class="adesivo adesivo-esgotado">Esgotado</span>` : p.selo ? `<span class="adesivo">${p.selo}</span>` : "";
         return `
-        <article class="card">
-          <div class="card-foto">${foto(p)}${p.selo ? `<span class="adesivo">${p.selo}</span>` : ""}</div>
+        <article class="card ${semEstoque ? "card-esgotado" : ""}">
+          <a class="card-foto" href="${linkProduto(p)}" aria-label="Ver detalhes de ${p.nome}">${foto(p)}${selo}</a>
           <div class="card-info">
             ${p.marca ? `<span class="card-marca">${p.marca}</span>` : ""}
-            <h3 class="card-nome">${p.nome}</h3>
+            <h3 class="card-nome"><a href="${linkProduto(p)}">${p.nome}</a></h3>
             <span class="card-preco">${brl(p.preco)}</span>
             ${notaCard(p.id)}
             ${maxParcelas() > 1 ? `<span class="card-parc">Pix, débito ou até ${maxParcelas()}x no cartão</span>` : ""}
             <div class="tamanhos" role="radiogroup" aria-label="Tamanho">
-              ${p.tamanhos
-                .map((t) => `<button class="tam ${tamanhoEscolhido[p.id] === t ? "ativo" : ""}" data-id="${p.id}" data-tam="${t}" role="radio" aria-checked="${tamanhoEscolhido[p.id] === t}">${t}</button>`)
-                .join("")}
+              ${p.tamanhos.map((t) => botaoTam(p, t)).join("")}
             </div>
-            <button class="btn-add" data-add="${p.id}">Adicionar à sacola</button>
+            ${semEstoque ? `<button class="btn-add" disabled>Esgotado</button>` : `<button class="btn-add" data-add="${p.id}">Adicionar à sacola</button>`}
           </div>
         </article>`;
       })
@@ -100,7 +121,7 @@
           <div class="item-foto">${foto(p)}</div>
           <div>
             <div class="item-nome">${p.nome}</div>
-            <div class="item-det">Tam. ${i.tam} · ${brl(p.preco)}</div>
+            <div class="item-det">Tam. ${i.tam} · ${brl(p.preco)}${esgotado(p, i.tam) ? ` · <strong class="item-esgotado">Esgotado</strong>` : ""}</div>
             <div class="qtd">
               <button data-menos="${idx}" aria-label="Diminuir">−</button>
               <span>${i.qtd}</span>
@@ -223,7 +244,9 @@
   function adicionar(id) {
     const p = PRODUTOS.find((x) => x.id === id);
     const tam = tamanhoEscolhido[id];
+    if (!disponiveis(p).length) return avisar("Essa peça esgotou");
     if (!tam) return avisar("Escolha um tamanho primeiro");
+    if (esgotado(p, tam)) return avisar(`O tamanho ${tam} esgotou`);
     const existente = sacola.find((i) => i.id === id && i.tam === tam);
     existente ? existente.qtd++ : sacola.push({ id, tam, qtd: 1 });
     salvar();
@@ -231,6 +254,7 @@
     const cont = $("#contador");
     cont.classList.remove("pulo"); void cont.offsetWidth; cont.classList.add("pulo");
     avisar(`${p.nome} (${tam}) adicionado`);
+    rastrear("add_to_cart", "AddToCart", p);
   }
 
   // ---------- Abrir / fechar ----------
@@ -258,6 +282,11 @@
 
   // ---------- WhatsApp ----------
   function finalizar() {
+    const acabou = sacola.find((i) => { const p = PRODUTOS.find((x) => x.id === i.id); return !p || esgotado(p, i.tam); });
+    if (acabou) {
+      const p = PRODUTOS.find((x) => x.id === acabou.id);
+      return avisar(`${p ? p.nome : "Uma peça"} (${acabou.tam}) esgotou. Remova da sacola para continuar.`);
+    }
     const v = (id) => $("#" + id).value.trim();
     const obrigatorios = ["nomeCliente", "cep", "rua", "numero", "bairro", "cidade", "uf"];
     let primeiroErro = null;
@@ -316,6 +345,7 @@
 
     salvarCliente();
     guardarPedido(codigo);
+    rastrear("begin_checkout", "InitiateCheckout", null, tot);
     window.open(`https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
@@ -434,6 +464,117 @@
     avisar("Valeu! Sua avaliação aparece no site assim que confirmarmos a compra.");
   }
 
+  // ---------- Página da peça ----------
+  let produtoAberto = null;
+  let abriuPorNavegacao = false;
+
+  function renderProduto(p) {
+    const f = fotosDe(p);
+    const disp = preparaTamanho(p);
+    const semEstoque = !disp.length;
+    $("#galeria").innerHTML = f.length
+      ? f.map((src, i) => `<div class="slide"><img src="${src}" alt="${escapar(p.nome)}, foto ${i + 1}" ${i ? 'loading="lazy"' : ""} /></div>`).join("")
+      : `<div class="slide">${foto(p)}</div>`;
+    $("#miniaturas").innerHTML = f.length > 1
+      ? f.map((src, i) => `<button type="button" class="mini ${i ? "" : "ativo"}" data-foto="${i}" aria-label="Ver foto ${i + 1}"><img src="${src}" alt="" /></button>`).join("")
+      : "";
+    const avals = LISTA_AVAL.filter((a) => a.produto === p.id);
+    $("#produtoInfo").innerHTML = `
+      ${p.marca ? `<span class="card-marca">${escapar(p.marca)}</span>` : ""}
+      <h2 class="produto-nome" id="prodNome">${escapar(p.nome)}</h2>
+      ${notaCard(p.id)}
+      <div class="produto-preco">${brl(p.preco)}</div>
+      ${maxParcelas() > 1 ? `<span class="card-parc">Pix, débito ou até ${maxParcelas()}x no cartão</span>` : ""}
+      <div class="produto-bloco">
+        <span class="produto-rotulo">Tamanho</span>
+        <div class="tamanhos" role="radiogroup" aria-label="Tamanho">${p.tamanhos.map((t) => botaoTam(p, t)).join("")}</div>
+        ${semEstoque ? `<p class="produto-aviso">Essa peça esgotou.</p>` : disp.length < p.tamanhos.length ? `<p class="produto-aviso">Últimas peças: só tem ${disp.join(" e ")}.</p>` : ""}
+      </div>
+      ${semEstoque ? `<button class="btn btn-neon produto-add" disabled>Esgotado</button>` : `<button class="btn btn-neon produto-add" data-add="${p.id}">Adicionar à sacola</button>`}
+      <button type="button" class="btn btn-contorno produto-compartilhar" id="compartilhar">Compartilhar peça</button>
+      ${p.descricao ? `<p class="produto-descricao">${escapar(p.descricao)}</p>` : ""}
+      <ul class="produto-infos">
+        <li><strong>Pronta entrega</strong>: a peça já está com a gente.</li>
+        <li><strong>Entrega em Americana e região</strong>, combinada no WhatsApp.</li>
+        <li><strong>Sem troca por tamanho</strong>: confira antes de fechar o pedido.</li>
+      </ul>
+      ${avals.length ? `<div class="produto-avals"><span class="produto-rotulo">Quem comprou</span>${avals.map((a) => `<div class="produto-aval">${estrelas(a.nota)}<p>“${escapar(a.texto)}”</p><small>${escapar(a.nome || "Cliente")} · ✔ Compra verificada</small></div>`).join("")}</div>` : ""}`;
+  }
+
+  function abrirProduto(id) {
+    const p = PRODUTOS.find((x) => x.id === id);
+    if (!p || LOJA.emBreve) return false;
+    produtoAberto = p;
+    renderProduto(p);
+    $("#paginaProduto").hidden = false;
+    $("#paginaProduto").scrollTop = 0;
+    $("#galeria").scrollLeft = 0;
+    document.body.style.overflow = "hidden";
+    document.title = `${p.nome} | ${LOJA.nome}`;
+    $("#fecharProduto").focus();
+    rastrear("view_item", "ViewContent", p);
+    return true;
+  }
+  function esconderProduto() {
+    if ($("#paginaProduto").hidden) return;
+    $("#paginaProduto").hidden = true;
+    document.body.style.overflow = "";
+    document.title = TITULO;
+    produtoAberto = null;
+    renderCatalogo();
+  }
+  function fecharProduto() {
+    if (abriuPorNavegacao) { abriuPorNavegacao = false; history.back(); return; }
+    history.replaceState(null, "", location.pathname + location.search);
+    esconderProduto();
+  }
+  function seguirHash() {
+    const m = location.hash.match(/^#produto-(\d+)$/);
+    if (m) { if (!abrirProduto(+m[1])) history.replaceState(null, "", location.pathname + location.search); }
+    else esconderProduto();
+  }
+  async function compartilhar() {
+    if (!produtoAberto) return;
+    const url = location.origin + location.pathname + linkProduto(produtoAberto);
+    const dados = { title: `${produtoAberto.nome} | ${LOJA.nome}`, text: `Olha essa peça da ${LOJA.nome}:`, url };
+    try {
+      if (navigator.share) { await navigator.share(dados); return; }
+      await navigator.clipboard.writeText(url);
+      avisar("Link da peça copiado");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      window.prompt("Copie o link da peça:", url);
+    }
+  }
+
+  // ---------- Contador de visitas (Google Analytics / Pixel da Meta) ----------
+  function iniciarAnalytics() {
+    const cfg = LOJA.analytics || {};
+    if (cfg.googleAnalytics) {
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.googleAnalytics)}`;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag("js", new Date());
+      window.gtag("config", cfg.googleAnalytics);
+    }
+    if (cfg.metaPixel) {
+      /* código oficial do Pixel da Meta */
+      !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+      window.fbq("init", cfg.metaPixel);
+      window.fbq("track", "PageView");
+    }
+  }
+  function rastrear(eventoGA, eventoMeta, p, valor) {
+    const v = valor != null ? valor : p ? p.preco : undefined;
+    try {
+      if (window.gtag) window.gtag("event", eventoGA, { currency: "BRL", value: v, items: p ? [{ item_id: String(p.id), item_name: p.nome, price: p.preco }] : undefined });
+      if (window.fbq) window.fbq("track", eventoMeta, { currency: "BRL", value: v, content_ids: p ? [String(p.id)] : undefined, content_name: p ? p.nome : undefined });
+    } catch {}
+  }
+
   // ---------- Eventos ----------
   $("#filtros").addEventListener("click", (e) => {
     const b = e.target.closest("[data-cat]");
@@ -443,9 +584,10 @@
     renderCatalogo();
   });
 
-  $("#grade").addEventListener("click", (e) => {
+  function cliqueTamanhoOuAdicionar(e) {
     const t = e.target.closest("[data-tam]");
     if (t) {
+      if (t.disabled) return;
       tamanhoEscolhido[+t.dataset.id] = t.dataset.tam;
       t.parentElement.querySelectorAll(".tam").forEach((b) => {
         const on = b === t;
@@ -456,7 +598,26 @@
     }
     const a = e.target.closest("[data-add]");
     if (a) adicionar(+a.dataset.add);
+  }
+  $("#grade").addEventListener("click", cliqueTamanhoOuAdicionar);
+  $("#produtoInfo").addEventListener("click", (e) => {
+    if (e.target.closest("#compartilhar")) return compartilhar();
+    cliqueTamanhoOuAdicionar(e);
   });
+  $("#fecharProduto").addEventListener("click", fecharProduto);
+  $("#paginaProduto").addEventListener("click", (e) => e.target.id === "paginaProduto" && fecharProduto());
+  $("#miniaturas").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-foto]");
+    if (!b) return;
+    const g = $("#galeria");
+    g.scrollTo({ left: g.clientWidth * +b.dataset.foto, behavior: "smooth" });
+  });
+  $("#galeria").addEventListener("scroll", () => {
+    const g = $("#galeria");
+    const i = Math.round(g.scrollLeft / Math.max(g.clientWidth, 1));
+    document.querySelectorAll("#miniaturas .mini").forEach((b, k) => b.classList.toggle("ativo", k === i));
+  }, { passive: true });
+  window.addEventListener("hashchange", () => { abriuPorNavegacao = /^#produto-/.test(location.hash); seguirHash(); });
 
   $("#itens").addEventListener("click", (e) => {
     const b = e.target.closest("button");
@@ -472,7 +633,7 @@
   $("#abrirSacola").addEventListener("click", abrir);
   $("#fecharSacola").addEventListener("click", fechar);
   $("#fundo").addEventListener("click", fechar);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { fechar(); fecharAvaliar(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#paginaProduto").hidden) return fecharProduto(); fechar(); fecharAvaliar(); } });
   $("#finalizar").addEventListener("click", finalizar);
   $("#checkout").addEventListener("submit", (e) => { e.preventDefault(); finalizar(); });
   $("#pagamentos").addEventListener("change", (e) => {
@@ -513,6 +674,8 @@
   });
 
   // ---------- Início ----------
+  const TITULO = document.title;
+  iniciarAnalytics();
   const SLOGANS = { "rua-veste": "A rua veste Ravyn", "seu-corre": "Seu corre, seu estilo" };
   if (LOJA.tituloGrafite) {
     $("#tituloGrafite").src = `img/titulo-${LOJA.tituloGrafite}.webp`;
@@ -542,4 +705,5 @@
   renderCatalogo();
   renderSacola();
   renderAvaliacoes();
+  seguirHash(); // abre a peça se o link veio com #produto-ID
 })();
