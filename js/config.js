@@ -24,8 +24,8 @@ const LOJA = {
   instagram: "https://www.instagram.com/ravyncompany/",
   // true = esconde o catálogo e mostra "Drop chegando em breve" (use enquanto não tiver as peças)
   emBreve: false,
-  // Título grafite da página inicial: "bolha" ou "bloco"
-  tituloGrafite: "bloco",
+  // Slogan grafite da página inicial: "rua-veste" (A RUA VESTE RAVYN) ou "seu-corre" (SEU CORRE SEU ESTILO)
+  tituloGrafite: "rua-veste",
   // Frases da faixa rolante no topo
   faixa: ["Nova drop disponível", "Peças originais", "Finalize pelo WhatsApp", "Envio para todo o Brasil"],
 };

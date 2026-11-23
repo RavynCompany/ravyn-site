@@ -513,7 +513,11 @@
   });
 
   // ---------- Início ----------
-  if (LOJA.tituloGrafite) $("#tituloGrafite").src = `img/titulo-${LOJA.tituloGrafite}.webp`;
+  const SLOGANS = { "rua-veste": "A rua veste Ravyn", "seu-corre": "Seu corre, seu estilo" };
+  if (LOJA.tituloGrafite) {
+    $("#tituloGrafite").src = `img/titulo-${LOJA.tituloGrafite}.webp`;
+    $("#tituloGrafite").alt = SLOGANS[LOJA.tituloGrafite] || "";
+  }
   if (LOJA.logo) $("#marca").innerHTML = `<img src="${LOJA.logo}" alt="${LOJA.nome}" />`;
   const zap = `https://wa.me/${LOJA.whatsapp}`;
   $("#linkWhats").href = zap;
