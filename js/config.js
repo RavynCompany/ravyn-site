@@ -25,7 +25,7 @@ const LOJA = {
   // true = esconde o catálogo e mostra "Drop chegando em breve" (use enquanto não tiver as peças)
   emBreve: false,
   // Slogan grafite da página inicial: "rua-veste" (A RUA VESTE RAVYN) ou "seu-corre" (SEU CORRE SEU ESTILO)
-  tituloGrafite: "rua-veste",
+  tituloGrafite: "seu-corre",
   // Frases da faixa rolante no topo
   faixa: ["Nova drop disponível", "Peças originais", "Finalize pelo WhatsApp", "Envio para todo o Brasil"],
 };
