@@ -30,7 +30,7 @@ const LOJA = {
   // googleAnalytics: o código da tag do Google (começa com GTM- ou G-, ex.: "GTM-542C4GV4")
   // metaPixel: o número do Pixel da Meta (Facebook/Instagram), ex.: "1234567890123456"
   analytics: {
-    googleAnalytics: "GTM-542C4GV4",
+    googleAnalytics: "G-SBPZHTHN52",
     metaPixel: "",
   },
   // Frases da faixa rolante no topo
