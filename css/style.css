@@ -211,9 +211,9 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 .card-aval .estrelas { font-size: 14px; letter-spacing: 1px; }
 
 /* modal */
-.modal-fundo { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.75); display: grid; place-items: center; padding: 16px; }
-.modal { width: min(520px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: var(--carvao); border: 3px solid var(--neon); border-radius: var(--raio); box-shadow: 8px 8px 0 var(--azul); }
-.modal-corpo { overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.modal-fundo { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.75); display: grid; grid-template-columns: minmax(0, 520px); place-content: center; padding: 16px; }
+.modal { width: 100%; min-width: 0; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--carvao); border: 3px solid var(--neon); border-radius: var(--raio); box-shadow: 8px 8px 0 var(--azul); }
+.modal-corpo { overflow-y: auto; overscroll-behavior: contain; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
 .modal-nota { font-size: 13px; color: var(--cinza); }
 .linha-campos > .campo-cidade { flex: 0 0 150px; }
 .estrelas-input { display: flex; gap: 4px; }
@@ -285,7 +285,8 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 .linha-campos > .campo-uf { flex: 0 0 70px; }
 .cep-status { font-size: 12px; color: var(--cinza); padding-bottom: 12px; line-height: 1.3; }
 .campo select {
-  font: inherit; font-size: 15px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--branco);
+  width: 100%; min-width: 0;
+  font: inherit; font-size: 16px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--branco);
   background: var(--preto); border: 2px solid var(--linha); border-radius: var(--raio); padding: 10px 12px;
 }
 .campo select:focus { outline: none; border-color: var(--neon); }
@@ -329,8 +330,9 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
 .sacola-rodape { padding: 14px 20px 18px; border-top: 1px solid var(--linha); display: flex; flex-direction: column; gap: 10px; background: var(--carvao); }
 .campo { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--cinza); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
 .campo input, .campo textarea {
-  font: inherit; font-size: 15px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--branco);
+  font: inherit; font-size: 16px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--branco);
   background: var(--preto); border: 2px solid var(--linha); border-radius: var(--raio); padding: 10px 12px; resize: vertical;
+  width: 100%; min-width: 0;
 }
 .campo input:focus, .campo textarea:focus { outline: none; border-color: var(--neon); }
 .campo input.erro { border-color: #ff4d5e; background: rgba(255, 77, 94, .06); }
@@ -352,6 +354,19 @@ h2 { font-family: var(--bloco); font-size: clamp(36px, 5vw, 60px); text-transfor
   .hero-logo { display: none; }
 }
 @media (max-width: 640px) {
+  .modal-fundo { padding: 0; grid-template-columns: 100%; align-content: end; }
+  .sacola-rodape { gap: 6px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .total { padding: 0; }
+  .total strong { font-size: 26px; }
+  .modal { max-height: 92vh; max-height: 92dvh; border-width: 3px 0 0; border-radius: 16px 16px 0 0; box-shadow: none; }
+  .modal .sacola-topo { padding: 14px 16px; }
+  .modal .sacola-topo h3 { font-size: 24px; }
+  .modal-corpo { padding: 14px 16px; gap: 12px; }
+  .modal .sacola-rodape { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .modal .linha-campos { flex-direction: column; align-items: stretch; }
+  .modal .linha-campos > .campo-cidade { flex: 1 1 auto; }
+  .estrelas-input button { font-size: 38px; padding: 0 4px; }
+  .modal .btn-whats { font-size: 15px; padding: 14px 12px; }
   .nav { display: none; }
   .btn-sacola { margin-left: auto; }
   .marca img { height: 46px; }
