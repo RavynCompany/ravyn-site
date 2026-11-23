@@ -62,6 +62,7 @@
             ${p.marca ? `<span class="card-marca">${p.marca}</span>` : ""}
             <h3 class="card-nome">${p.nome}</h3>
             <span class="card-preco">${brl(p.preco)}</span>
+            ${notaCard(p.id)}
             ${maxParcelas() > 1 ? `<span class="card-parc">Pix, débito ou até ${maxParcelas()}x no cartão</span>` : ""}
             <div class="tamanhos" role="radiogroup" aria-label="Tamanho">
               ${p.tamanhos
@@ -289,8 +290,10 @@
     const cep = v("cep").replace(/\D/g, "").replace(/(\d{5})(\d{3})/, "$1-$2");
     const obs = v("obs");
 
+    const codigo = novoCodigoPedido();
     const msg = [
       `Olá, ${LOJA.nome}! Gostaria de fazer um pedido:`,
+      `*Pedido #${codigo}*`,
       "",
       "*🛒 Itens*",
       ...linhas,
@@ -312,7 +315,123 @@
     ].filter((l) => l !== null).join("\n");
 
     salvarCliente();
+    guardarPedido(codigo);
     window.open(`https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
+  // ---------- Código do pedido ----------
+  function novoCodigoPedido() {
+    const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem 0/O e 1/I para não confundir
+    let c = "";
+    const r = (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint32Array(5)) : [...Array(5)].map(() => Math.random() * 2 ** 32);
+    for (const n of r) c += letras[n % letras.length];
+    return "RVN-" + c;
+  }
+  function pedidosSalvos() {
+    try { return JSON.parse(localStorage.getItem("ravyn-pedidos")) || []; } catch { return []; }
+  }
+  function guardarPedido(codigo) {
+    const lista = pedidosSalvos();
+    lista.unshift({ codigo, data: new Date().toISOString().slice(0, 10), itens: [...new Set(sacola.map((i) => i.id))] });
+    try { localStorage.setItem("ravyn-pedidos", JSON.stringify(lista.slice(0, 20))); } catch {}
+  }
+
+  // ---------- Avaliações ----------
+  const LISTA_AVAL = (typeof AVALIACOES !== "undefined" ? AVALIACOES : []).filter((a) => a && a.nota >= 1 && a.nota <= 5 && a.texto);
+  const escapar = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const estrelas = (n) => `<span class="estrelas" aria-label="${n} de 5 estrelas">${"★".repeat(Math.round(n))}<span class="vazia">${"★".repeat(5 - Math.round(n))}</span></span>`;
+  const media = (lista) => lista.reduce((s, a) => s + a.nota, 0) / lista.length;
+  const fmtNota = (n) => n.toFixed(1).replace(".", ",");
+
+  function notaCard(id) {
+    const l = LISTA_AVAL.filter((a) => a.produto === id);
+    if (!l.length) return "";
+    return `<span class="card-aval">${estrelas(media(l))} ${fmtNota(media(l))} (${l.length})</span>`;
+  }
+
+  function renderAvaliacoes() {
+    if (!LISTA_AVAL.length) {
+      $("#avalResumo").innerHTML = "";
+      $("#avalLista").innerHTML = `<div class="aval-vazio"><strong>Ainda sem avaliações</strong>As primeiras avaliações de quem comprou vão aparecer aqui.</div>`;
+      $("#avalLista").style.display = "block";
+      return;
+    }
+    const m = media(LISTA_AVAL);
+    $("#avalResumo").innerHTML = `<strong>${fmtNota(m)}</strong><div>${estrelas(m)}<br><span>${LISTA_AVAL.length} avaliaç${LISTA_AVAL.length > 1 ? "ões" : "ão"} de clientes</span></div>`;
+    $("#avalLista").innerHTML = [...LISTA_AVAL]
+      .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")))
+      .map((a) => {
+        const p = PRODUTOS.find((x) => x.id === a.produto);
+        return `<article class="aval-card">
+          ${estrelas(a.nota)}
+          <p class="aval-texto">“${escapar(a.texto)}”</p>
+          ${p ? `<span class="aval-produto">${escapar(p.nome)}</span>` : ""}
+          <div class="aval-autor"><span><strong>${escapar(a.nome || "Cliente")}</strong>${a.cidade ? ` · ${escapar(a.cidade)}` : ""}</span><span class="verificado">✔ Compra verificada</span></div>
+        </article>`;
+      })
+      .join("");
+  }
+
+  let notaEscolhida = 0;
+  function renderEstrelasInput() {
+    $("#avalEstrelas").innerHTML = [1, 2, 3, 4, 5]
+      .map((n) => `<button type="button" role="radio" aria-checked="${n === notaEscolhida}" aria-label="${n} estrela${n > 1 ? "s" : ""}" data-nota="${n}" class="${n <= notaEscolhida ? "on" : ""}">★</button>`)
+      .join("");
+  }
+  function opcoesProduto(ids) {
+    const lista = ids && ids.length ? PRODUTOS.filter((p) => ids.includes(p.id)) : PRODUTOS;
+    $("#avalProduto").innerHTML = `<option value="">Escolha a peça</option>` + lista.map((p) => `<option value="${p.id}">${escapar(p.nome)}</option>`).join("");
+  }
+  function sincronizarPedido() {
+    const cod = $("#avalPedido").value.trim().toUpperCase();
+    const ped = pedidosSalvos().find((x) => x.codigo === cod);
+    opcoesProduto(ped ? ped.itens : null);
+  }
+  function abrirAvaliar() {
+    const peds = pedidosSalvos();
+    $("#avalPedidosSalvos").innerHTML = peds.map((x) => `<option value="${x.codigo}">${x.data}</option>`).join("");
+    if (peds.length && !$("#avalPedido").value) $("#avalPedido").value = peds[0].codigo;
+    if (!$("#avalNome").value) $("#avalNome").value = $("#nomeCliente").value;
+    if (!$("#avalCidade").value && $("#cidade").value) $("#avalCidade").value = `${$("#cidade").value}${$("#uf").value ? "/" + $("#uf").value : ""}`;
+    sincronizarPedido();
+    renderEstrelasInput();
+    $("#modalAvaliar").hidden = false;
+    document.body.style.overflow = "hidden";
+    $("#avalPedido").focus();
+  }
+  function fecharAvaliar() {
+    $("#modalAvaliar").hidden = true;
+    document.body.style.overflow = "";
+  }
+  function enviarAvaliacao(e) {
+    e.preventDefault();
+    const cod = $("#avalPedido").value.trim().toUpperCase();
+    const checks = [
+      [$("#avalPedido"), /^RVN-[A-Z0-9]{5}$/.test(cod), "Informe o código do pedido (ex.: RVN-7K2QX)"],
+      [$("#avalProduto"), !!$("#avalProduto").value, "Escolha a peça que você comprou"],
+      [$("#avalEstrelas"), notaEscolhida > 0, "Dê uma nota de 1 a 5 estrelas"],
+      [$("#avalTexto"), $("#avalTexto").value.trim().length >= 10, "Escreva um comentário (pelo menos 10 letras)"],
+      [$("#avalNome"), !!$("#avalNome").value.trim(), "Informe seu nome"],
+    ];
+    checks.forEach(([el, ok]) => el.classList.toggle("erro", !ok));
+    const falha = checks.find(([, ok]) => !ok);
+    if (falha) { falha[0].scrollIntoView({ block: "center" }); if (falha[0].focus) falha[0].focus(); return avisar(falha[2]); }
+
+    const p = PRODUTOS.find((x) => x.id === +$("#avalProduto").value);
+    const msg = [
+      `⭐ *Avaliação de compra — ${LOJA.nome}*`,
+      `Pedido #${cod}`,
+      "",
+      `Peça: ${p ? p.nome : $("#avalProduto").value}`,
+      `Nota: ${"★".repeat(notaEscolhida)}${"☆".repeat(5 - notaEscolhida)} (${notaEscolhida}/5)`,
+      `Comentário: ${$("#avalTexto").value.trim()}`,
+      "",
+      `Nome: ${$("#avalNome").value.trim()}`,
+      $("#avalCidade").value.trim() ? `Cidade: ${$("#avalCidade").value.trim()}` : null,
+    ].filter((l) => l !== null).join("\n");
+    window.open(`https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+    fecharAvaliar();
+    avisar("Valeu! Sua avaliação aparece no site assim que confirmarmos a compra.");
   }
 
   // ---------- Eventos ----------
@@ -353,7 +472,7 @@
   $("#abrirSacola").addEventListener("click", abrir);
   $("#fecharSacola").addEventListener("click", fechar);
   $("#fundo").addEventListener("click", fechar);
-  document.addEventListener("keydown", (e) => e.key === "Escape" && fechar());
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { fechar(); fecharAvaliar(); } });
   $("#finalizar").addEventListener("click", finalizar);
   $("#checkout").addEventListener("submit", (e) => { e.preventDefault(); finalizar(); });
   $("#pagamentos").addEventListener("change", (e) => {
@@ -365,6 +484,23 @@
     salvarCliente();
   });
   $("#parcelas").addEventListener("change", atualizarTotais);
+  $("#abrirAvaliar").addEventListener("click", abrirAvaliar);
+  $("#fecharAvaliar").addEventListener("click", fecharAvaliar);
+  $("#modalAvaliar").addEventListener("click", (e) => e.target.id === "modalAvaliar" && fecharAvaliar());
+  $("#formAvaliar").addEventListener("submit", enviarAvaliacao);
+  $("#avalPedido").addEventListener("input", (e) => {
+    e.target.value = e.target.value.toUpperCase().replace(/\s/g, "");
+    e.target.classList.remove("erro");
+    sincronizarPedido();
+  });
+  $("#avalEstrelas").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-nota]");
+    if (!b) return;
+    notaEscolhida = +b.dataset.nota;
+    $("#avalEstrelas").classList.remove("erro");
+    renderEstrelasInput();
+  });
+  $("#formAvaliar").addEventListener("input", (e) => e.target.classList.remove("erro"));
   $("#cep").addEventListener("input", (e) => {
     let d = e.target.value.replace(/\D/g, "").slice(0, 8);
     e.target.value = d.length > 5 ? d.slice(0, 5) + "-" + d.slice(5) : d;
@@ -377,6 +513,7 @@
   });
 
   // ---------- Início ----------
+  document.body.dataset.fonte = LOJA.fonteGrafite || 1;
   if (LOJA.logo) $("#marca").innerHTML = `<img src="${LOJA.logo}" alt="${LOJA.nome}" />`;
   const zap = `https://wa.me/${LOJA.whatsapp}`;
   $("#linkWhats").href = zap;
@@ -400,4 +537,5 @@
   renderFiltros();
   renderCatalogo();
   renderSacola();
+  renderAvaliacoes();
 })();

@@ -8,7 +8,7 @@
   <link rel="icon" href="img/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Rubik+Bubbles&family=Rubik+Wet+Paint&family=Sedgwick+Ave+Display&family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -29,9 +29,9 @@
     <div class="spray s1"></div><div class="spray s2"></div><div class="spray s3"></div>
     <div class="hero-conteudo">
       <span class="adesivo adesivo-hero">Nova drop</span>
-      <h1>
-        <span class="linha">Feito pra</span>
-        <span class="linha marcador">rua.</span>
+      <h1 class="grafite" aria-label="Estilo sem freio.">
+        <span class="linha">Estilo</span>
+        <span class="linha destaque">sem freio.</span>
       </h1>
       <p class="hero-texto">Streetwear original, direto pro seu corre. Escolha suas peças, monte a sacola e fecha o pedido no nosso WhatsApp.</p>
       <div class="hero-acoes">
@@ -49,6 +49,18 @@
     </div>
     <div class="grade" id="grade"></div>
   </main>
+
+  <section id="avaliacoes" class="avaliacoes">
+    <div class="aval-cabecalho">
+      <h2><span class="fita fita-verde">Quem comprou</span></h2>
+      <div class="aval-resumo" id="avalResumo"></div>
+    </div>
+    <div class="aval-lista" id="avalLista"></div>
+    <div class="aval-cta">
+      <p>Comprou com a gente? Conta o que achou. Só quem tem um código de pedido pode avaliar.</p>
+      <button class="btn btn-neon" id="abrirAvaliar">Avaliar minha compra</button>
+    </div>
+  </section>
 
   <section id="como-comprar" class="como">
     <h2><span class="fita fita-azul">Como comprar</span></h2>
@@ -150,10 +162,48 @@
     </div>
   </aside>
 
+  <!-- Avaliar compra -->
+  <div class="modal-fundo" id="modalAvaliar" hidden>
+    <form class="modal" id="formAvaliar" novalidate role="dialog" aria-modal="true" aria-labelledby="tituloAvaliar">
+      <div class="sacola-topo">
+        <h3 id="tituloAvaliar">Avaliar compra</h3>
+        <button type="button" class="fechar" id="fecharAvaliar" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-corpo">
+        <p class="modal-nota">Avaliações são só para quem comprou. Use o código que veio no seu pedido pelo WhatsApp (ex.: RVN-7K2QX).</p>
+        <label class="campo">Código do pedido
+          <input type="text" id="avalPedido" list="avalPedidosSalvos" placeholder="RVN-XXXXX" autocomplete="off" required />
+          <datalist id="avalPedidosSalvos"></datalist>
+        </label>
+        <label class="campo">Peça que você comprou
+          <select id="avalProduto" required></select>
+        </label>
+        <div class="campo">Sua nota
+          <div class="estrelas-input" id="avalEstrelas" role="radiogroup" aria-label="Nota de 1 a 5"></div>
+        </div>
+        <label class="campo">Comentário
+          <textarea id="avalTexto" rows="3" maxlength="400" placeholder="O que achou da peça, do tecido, do caimento, da entrega…" required></textarea>
+        </label>
+        <div class="linha-campos">
+          <label class="campo">Seu nome
+            <input type="text" id="avalNome" autocomplete="name" required />
+          </label>
+          <label class="campo campo-cidade">Cidade/UF
+            <input type="text" id="avalCidade" placeholder="Campinas/SP" />
+          </label>
+        </div>
+      </div>
+      <div class="sacola-rodape">
+        <button type="submit" class="btn btn-whats">Enviar avaliação pelo WhatsApp</button>
+      </div>
+    </form>
+  </div>
+
   <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
   <script src="js/config.js"></script>
   <script src="js/products.js"></script>
+  <script src="js/avaliacoes.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
